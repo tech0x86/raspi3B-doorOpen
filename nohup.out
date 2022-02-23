@@ -1,0 +1,22 @@
+main.py:60: RuntimeWarning: This channel is already in use, continuing anyway.  Use GPIO.setwarnings(False) to disable warnings.
+  GPIO.setup(ledPin,GPIO.OUT) #led
+main.py:61: RuntimeWarning: This channel is already in use, continuing anyway.  Use GPIO.setwarnings(False) to disable warnings.
+  GPIO.setup(led2Pin,GPIO.OUT) #led +motor
+main.py:19: RuntimeWarning: This channel is already in use, continuing anyway.  Use GPIO.setwarnings(False) to disable warnings.
+  GPIO.setup(self.mPin, GPIO.OUT)
+
+Ctl+C
+
+ exit program
+main.py:60: RuntimeWarning: This channel is already in use, continuing anyway.  Use GPIO.setwarnings(False) to disable warnings.
+  GPIO.setup(ledPin,GPIO.OUT) #led
+main.py:61: RuntimeWarning: This channel is already in use, continuing anyway.  Use GPIO.setwarnings(False) to disable warnings.
+  GPIO.setup(led2Pin,GPIO.OUT) #led +motor
+main.py:19: RuntimeWarning: This channel is already in use, continuing anyway.  Use GPIO.setwarnings(False) to disable warnings.
+  GPIO.setup(self.mPin, GPIO.OUT)
+2021-06-22 22:29:11.163735
+2021-06-22 22:29:49.203511
+
+Ctl+C
+
+ exit program
