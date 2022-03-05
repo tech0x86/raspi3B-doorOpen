@@ -49,13 +49,13 @@ rasbian OS
 細かいもの諸々
 
 システム全体像
-![IMG_3706](https://user-images.githubusercontent.com/6120427/156878565-db9978fd-cd7d-4de0-aa72-96681d6cde5c.jpg)
+![IMG_3706](https://user-images.githubusercontent.com/6120427/156879679-da268966-5f8a-47c9-a15a-58eaf0c3ce3a.jpeg)
+
 
 接写　いろんなアングルから
 
-![IMG_3707](https://user-images.githubusercontent.com/6120427/156878573-a019388b-9230-45fb-825f-68f94437421a.jpg)
-![IMG_3709](https://user-images.githubusercontent.com/6120427/156878604-209177bb-4f1c-46ed-ac9c-800abd1721ba.jpg)
-![IMG_3710](https://user-images.githubusercontent.com/6120427/156878662-380cec60-b779-4960-969e-82ece446b8ba.jpg)
+![IMG_3707](https://user-images.githubusercontent.com/6120427/156879683-bb73f3b1-6f03-4312-aa8c-733be9bbc29c.jpeg)
+![IMG_3709](https://user-images.githubusercontent.com/6120427/156879688-0102baad-dccd-45f4-9de5-54c531dc4c36.jpeg)
 
 
 #環境設定
@@ -106,7 +106,8 @@ $gpio readall
  |     |     |    3.3v |      |   | 17 || 18 | 0 | IN   | GPIO. 5 | 5   | 24  |
  |  10 |  12 |    MOSI | ALT0 | 0 | 19 || 20 |   |      | 0v      |     |     |
  |   9 |  13 |    MISO | ALT0 | 0 | 21 || 22 | 0 | IN   | GPIO. 6 | 6   | 25  |
- |  11 |  14 |    SCLK | ALT0 | 0 | 23 || 24 | 1 | OUT  | CE0     | 10  | 8   |
+ |  11 |  14 |    SCLK | ALT0 | 0 | 23 || 24 | 1 | OUT  | C![IMG_3709](https://user-images.githubusercontent.com/6120427/156879692-c6843ce2-73ff-4d1b-8062-b9fa2bc08a08.jpeg)
+E0     | 10  | 8   |
  |     |     |      0v |      |   | 25 || 26 | 1 | OUT  | CE1     | 11  | 7   |
  |   0 |  30 |   SDA.0 |   IN | 1 | 27 || 28 | 1 | IN   | SCL.0   | 31  | 1   |
  |   5 |  21 | GPIO.21 |   IN | 1 | 29 || 30 |   |      | 0v      |     |     |
