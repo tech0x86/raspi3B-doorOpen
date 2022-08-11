@@ -92,16 +92,15 @@ if __name__ == '__main__':
                 if flagSwitch == 0:
                     flagSwitch = 1
                     blinkTime = 0.1
-		    GPIO.output(led2Pin,1)
+					GPIO.output(led2Pin,1)
                     time.sleep(3)
-		    GPIO.output(led2Pin,0)
+					GPIO.output(led2Pin,0)
                 else:
-                    flagSwitch = 0
-                    blinkTime = 0.5
-		    GPIO.output(led2Pin,1)
+					flagSwitch = 0
+					blinkTime = 0.5
+					GPIO.output(led2Pin,1)
                     time.sleep(3)
-  		    GPIO.output(led2Pin,0)
-
+					GPIO.output(led2Pin,0)
             if GPIO.input(cdsPin) == 1: #detect light
                     dt_now = datetime.datetime.now()
                     f.write(str(dt_now) + '\n')
@@ -122,20 +121,20 @@ if __name__ == '__main__':
                         GPIO.output(21,0)
                         GPIO.output(20,0)
                         GPIO.output(ledPin,1) #led OFF ,Motor OFF
-                    else : #flagSwitch = 0
-			#print("sleep 30 \n")
-			time.sleep(30)
-            time.sleep(1-blinkTime)
-
+                    else : 
+						#flagSwitch = 0
+						#print("sleep 30 \n")
+						time.sleep(30)
+						time.sleep(1-blinkTime)
     except KeyboardInterrupt  :         #Ctl+Cが押されたらループを終了
         print("\nCtl+C")
     except Exception as e:
         print(str(e))
     finally:
-	GPIO.output(ledPin,0) #led ON ,Motor ON
+		GPIO.output(ledPin,0) #led ON ,Motor ON
         ServoBttm.Cleanup(pos=bttmInitPos)
         ServoPhone.Cleanup(pos=phoneInitPos)
-	GPIO.output(ledPin,1) #led OFF ,Motor OFF
+		GPIO.output(ledPin,1) #led OFF ,Motor OFF
         GPIO.cleanup()
         f.close()
         print("\n exit program")
