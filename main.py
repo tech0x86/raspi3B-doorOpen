@@ -4,7 +4,7 @@ import RPi.GPIO as GPIO
 import time
 import os
 import datetime
-path = "/home/pi/Desktop/log.txt"
+path = "/home/pi3b1/Desktop/log.txt"
 # SG92Rをコントロールするための
 
 
