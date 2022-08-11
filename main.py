@@ -84,10 +84,11 @@ if __name__ == '__main__':
     GPIO.output(20, 0)
     GPIO.output(ledPin, 1)  # led OFF ,Motor OFF
 
+    flagSwitch = 0
+    blinkTime = 0.5
+
     try:
         f = open(path, mode="a")
-        flagSwitch = 0
-        blinkTime = 0.5
     except Exception as e:
         print(str(e))
         f.close()
