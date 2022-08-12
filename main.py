@@ -10,8 +10,8 @@ import requests
 FILE_PATH = "/home/pi3b1/Desktop/log.txt"
 PATH_JTALK = "./jtalk.sh"
 
-LINE_NOTIFY_TOKEN = os.environ.get('LINE_TOKEN')
-LINE_NOTIFY_API = 'https://notify-api.line.me/api/notify'
+LINE_NOTIFY_TOKEN = os.environ.get("LINE_TOKEN")
+LINE_NOTIFY_API = "https://notify-api.line.me/api/notify"
 
 
 # pin assigment
@@ -63,8 +63,8 @@ def jtalk_script(message):
 
 # line　に通知する
 def send_line_message(notification_message):
-    headers = {'Authorization': f'Bearer {LINE_NOTIFY_TOKEN}'}
-    data = {'message': f' {notification_message}'}
+    headers = {"Authorization": f"Bearer {LINE_NOTIFY_TOKEN}"}
+    data = {"message": f" {notification_message}"}
     requests.post(LINE_NOTIFY_API, headers = headers, data = data)
 
 def act_switch_pushed(channel):
@@ -75,7 +75,7 @@ def act_switch_pushed(channel):
 
     if FLAG_SWITCH_ACT == 0:
         print("mode activated")
-        jtalk_script("置き配受け取りモードON")
+        jtalk_script("置き配受け取りモードオン")
         FLAG_SWITCH_ACT = 1
         LED_BLINK_TIME = 0.1
         GPIO.output(PIN_LIFE_LED, 1)
@@ -107,7 +107,7 @@ def light_detected(channel):
         GPIO.output(PIN_MOTOR_POWER, 0)  # Motor power ON
         time.sleep(1)
         motor_talk.SetPos(MOT_POS_PUSH)  # talk on
-        jtalk_script("荷物は玄関前に置き配してください")
+        jtalk_script("荷物は、玄関前に、置き配してください")
         send_line_message("荷物が届きました")
         time.sleep(4)
         motor_unlock.SetPos(MOT_POS_PUSH) # unlock bttn push
@@ -133,11 +133,11 @@ if __name__ == '__main__':
     # Useing GPIO No.  to idetify channel
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(PIN_CDS, GPIO.IN) 
-    GPIO.add_event_detect(PIN_CDS, GPIO.RISING, callback=light_detected, bouncetime=5000) # 割り込み関数
+    GPIO.add_event_detect(PIN_CDS, GPIO.RISING, callback=light_detected, bouncetime=15000) # 割り込み関数
     GPIO.setup(PIN_MOTOR_POWER, GPIO.OUT) 
     GPIO.setup(PIN_LIFE_LED, GPIO.OUT)
     GPIO.setup(PIN_SWITCH_ACT_TRIG, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-    GPIO.add_event_detect(PIN_SWITCH_ACT_TRIG, GPIO.RISING, callback=act_switch_pushed, bouncetime=5000) # 割り込み関数
+    GPIO.add_event_detect(PIN_SWITCH_ACT_TRIG, GPIO.RISING, callback=act_switch_pushed, bouncetime=2000) # 割り込み関数
 
     motor_unlock = SG90_92R_Class(Pin=PIN_MOTOR_UNLOCK, ZeroOffsetDuty=0)
     motor_talk = SG90_92R_Class(Pin=PIN_MOTOR_TALK, ZeroOffsetDuty=0)
