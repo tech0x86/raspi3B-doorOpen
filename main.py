@@ -4,9 +4,22 @@ import RPi.GPIO as GPIO
 import time
 import os
 import datetime
-path = "/home/pi/Desktop/log.txt"
-# SG92Rをコントロールするための
+FILE_PATH = "/home/pi3b1/Desktop/log.txt"
 
+PIN_CDS = 19
+PIN_MOTOR_POWER = 13  # &motorDriver (0 is On)
+PIN_LIFE_LED = 26
+PIN_SWITCH_ACT_TRIG = 12  # black switch
+PIN_MOTOR_UNLOCK = 20
+PIN_MOTOR_TALK = 21
+
+MOT_POS_INIT = 90
+MOT_POS_PUSH = 60
+
+FLAG_SWITCH_ACT = 0 # 1 :active unlocker mode
+LED_BLINK_TIME = 1.0
+
+# サーボSG92Rをコントロールするためのクラス
 
 class SG90_92R_Class:
     # mPin : GPIO Number (PWM)
@@ -14,7 +27,6 @@ class SG90_92R_Class:
     # m_Zero_offset_duty :
 
     """コンストラクタ"""
-
     def __init__(self, Pin, ZeroOffsetDuty):
         self.mPin = Pin
         self.m_ZeroOffsetDuty = ZeroOffsetDuty
@@ -24,127 +36,106 @@ class SG90_92R_Class:
         self.mPwm = GPIO.PWM(self.mPin, 50)  # set 20ms / 50 Hz
 
     """位置セット"""
-
     def SetPos(self, pos):
         # Duty ratio = 2.5%〜12.0% : 0.5ms〜2.4ms : 0 ～ 180deg
         duty = (12-2.5)/180*pos+2.5 + self.m_ZeroOffsetDuty
         self.mPwm.start(duty)
     """終了処理"""
-
     def Cleanup(self, pos):
         # サーボを10degにセットしてから、インプットモードにしておく
         self.SetPos(pos)  # init pos (90)
         time.sleep(1)
         GPIO.setup(self.mPin, GPIO.IN)
 
+def act_switch_pushed(channel):
+    print("act switch pushed \n")
+    if FLAG_SWITCH_ACT == 0:
+        print("mode activated \n")
+        FLAG_SWITCH_ACT = 1
+        LED_BLINK_TIME = 0.1
+        GPIO.output(PIN_LIFE_LED, 1)
+        time.sleep(3)
+        GPIO.output(PIN_LIFE_LED, 0)
+    else:
+        print("mode deactivated \n")
+        FLAG_SWITCH_ACT = 0
+        LED_BLINK_TIME = 1.0
+        GPIO.output(PIN_LIFE_LED, 1)
+        time.sleep(3)
+        GPIO.output(PIN_LIFE_LED, 0)
 
-def shutdown(channel):
-    os.system("sudo shutdown -h now")
+def light_detected(channel):
+    print("detected light \n")
+    dt_now = datetime.datetime.now()
+    print(dt_now)
 
+#    f.write(str(dt_now) + '\n')
+#    f.close()
+#    f = open(FILE_PATH, mode="a")
 
-def reboot(channel):
-    os.system("sudo reboot")
-
+    if FLAG_SWITCH_ACT == 1: 
+        print("start unlock \n")
+        GPIO.output(PIN_MOTOR_POWER, 0)  # Motor power ON
+        time.sleep(1)
+        motor_talk.SetPos(MOT_POS_PUSH)  # talk on
+        time.sleep(2)
+        motor_unlock.SetPos(MOT_POS_PUSH) # unlock bttn push
+        time.sleep(1)
+        motor_unlock.SetPos(MOT_POS_INIT) # unlock bttn unpush
+        time.sleep(1)
+        motor_talk.SetPos(MOT_POS_INIT) # talk off
+        time.sleep(1)
+        GPIO.output(PIN_MOTOR_UNLOCK, 0)
+        GPIO.output(PIN_MOTOR_TALK, 0)
+        GPIO.output(PIN_MOTOR_POWER, 1)  #Motor power OFF
+    else:
+        print("sleep 30sec")
+        time.sleep(30)
 
 """コントロール例"""
 if __name__ == '__main__':
-    cdsPin = 19
-    ledPin = 13  # &motorDriver (0 is On)
-    led2Pin = 26
-    switchPin = 12  # black
-    switch2Pin = 16  # red
-    switch3Pin = 25  # red bottom
-    # servo pin = 20,21
-
-    bttmInitPos = 90
-    bttmPushPos = 69
-    phoneInitPos = 120
-    phoneGetPos = 90
-
     # Useing GPIO No.  to idetify channel
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(cdsPin, GPIO.IN)  # cdS
-    GPIO.setup(ledPin, GPIO.OUT)  # led
-    GPIO.setup(led2Pin, GPIO.OUT)  # led +motor
-    GPIO.setup(switchPin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-    GPIO.setup(switch2Pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-    GPIO.setup(switch3Pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-    GPIO.add_event_detect(switch2Pin, GPIO.RISING,
-                          callback=shutdown, bouncetime=2000)
-    GPIO.add_event_detect(switch3Pin, GPIO.RISING,
-                          callback=reboot, bouncetime=2000)
+    GPIO.setup(PIN_CDS, GPIO.IN) 
+    GPIO.add_event_detect(PIN_CDS, GPIO.RISING, callback=light_detected, bouncetime=2000) # 割り込み関数
+    GPIO.setup(PIN_MOTOR_POWER, GPIO.OUT) 
+    GPIO.setup(PIN_LIFE_LED, GPIO.OUT)
+    GPIO.setup(PIN_SWITCH_ACT_TRIG, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+    GPIO.add_event_detect(PIN_SWITCH_ACT_TRIG, GPIO.RISING, callback=act_switch_pushed, bouncetime=2000) # 割り込み関数
 
-    ServoBttm = SG90_92R_Class(Pin=21, ZeroOffsetDuty=0)
-    ServoPhone = SG90_92R_Class(Pin=20, ZeroOffsetDuty=0)
+    motor_unlock = SG90_92R_Class(Pin=PIN_MOTOR_UNLOCK, ZeroOffsetDuty=0)
+    motor_talk = SG90_92R_Class(Pin=PIN_MOTOR_TALK, ZeroOffsetDuty=0)
 
-    GPIO.output(ledPin, 0)  # led ON ,Motor ON
-    ServoBttm.SetPos(bttmInitPos)  # init pos
-    ServoPhone.SetPos(phoneInitPos)  # init pos
-    GPIO.output(21, 0)
-    GPIO.output(20, 0)
-    GPIO.output(ledPin, 1)  # led OFF ,Motor OFF
-
-    flagSwitch = 0
-    blinkTime = 0.5
-
-    try:
-        f = open(path, mode="a")
-    except Exception as e:
-        print(str(e))
-        f.close()
+    GPIO.output(PIN_MOTOR_POWER, 0)  #Motor power ON
+    GPIO.output(PIN_MOTOR_UNLOCK, 0) #Motor ON
+    GPIO.output(PIN_MOTOR_TALK, 0) #Motor ON
+    motor_unlock.SetPos(MOT_POS_INIT)  #set init pos
+    motor_talk.SetPos(MOT_POS_INIT)  #set init pos
+    time.sleep(1)
+    GPIO.output(PIN_MOTOR_POWER, 1)  # Motor power OFF
+    
+#    try:
+#        f = open(FILE_PATH, mode="a")
+#    except Exception as e:
+#        print(str(e))
+#        f.close()
     try:
         while True:
-            GPIO.output(led2Pin, 1)
-            time.sleep(blinkTime)
-            GPIO.output(led2Pin, 0)
+            GPIO.output(PIN_LIFE_LED, 1)
+            time.sleep(LED_BLINK_TIME)
+            GPIO.output(PIN_LIFE_LED, 0)
+            time.sleep(2.0-LED_BLINK_TIME)
 
-            if GPIO.input(switchPin) == 1:  # black switch push
-                if flagSwitch == 0:
-                    flagSwitch = 1
-                    blinkTime = 0.1
-                    GPIO.output(led2Pin, 1)
-                    time.sleep(3)
-                    GPIO.output(led2Pin, 0)
-                else:
-                    flagSwitch = 0
-                    blinkTime = 0.5
-                    GPIO.output(led2Pin, 1)
-                    time.sleep(3)
-                    GPIO.output(led2Pin, 0)
-            if GPIO.input(cdsPin) == 1:  # detect light
-                dt_now = datetime.datetime.now()
-                f.write(str(dt_now) + '\n')
-                f.close()
-                f = open(path, mode="a")
-                print(dt_now)
-                if flagSwitch == 1:
-                    GPIO.output(ledPin, 0)  # led ON ,Motor ON
-                    time.sleep(1)
-                    ServoPhone.SetPos(phoneGetPos)  # phone off (get phone)
-                    time.sleep(2)
-                    ServoBttm.SetPos(bttmPushPos)
-                    time.sleep(1)
-                    ServoBttm.SetPos(bttmInitPos)
-                    time.sleep(1)
-                    ServoPhone.SetPos(phoneInitPos)
-                    time.sleep(1)
-                    GPIO.output(21, 0)
-                    GPIO.output(20, 0)
-                    GPIO.output(ledPin, 1)  # led OFF ,Motor OFF
-                else:
-                    time.sleep(30)
-                    time.sleep(1-blinkTime)
-                    # flagSwitch = 0
-                    # print("sleep 30 \n")
     except KeyboardInterrupt:  # Ctl+Cが押されたらループを終了
         print("\nCtl+C")
     except Exception as e:
         print(str(e))
     finally:
-        GPIO.output(ledPin, 0)  # led ON ,Motor ON
-        ServoBttm.Cleanup(pos=bttmInitPos)
-        ServoPhone.Cleanup(pos=phoneInitPos)
-        GPIO.output(ledPin, 1)  # led OFF ,Motor OFF
+        GPIO.output(PIN_MOTOR_POWER, 0)  # Motor ON
+        motor_unlock.Cleanup(pos=MOT_POS_INIT)
+        motor_talk.Cleanup(pos=MOT_POS_INIT)
+        time.sleep(1)
+        GPIO.output(PIN_MOTOR_POWER, 1)  # Motor power OFF
         GPIO.cleanup()
-        f.close()
+        #f.close()
         print("\n exit program")
