@@ -48,27 +48,31 @@ class SG90_92R_Class:
         GPIO.setup(self.mPin, GPIO.IN)
 
 def act_switch_pushed(channel):
-    print("act switch pushed \n")
+    print("act switch pushed")
+    GPIO.remove_event_detect(PIN_SWITCH_ACT_TRIG)
     global FLAG_SWITCH_ACT
     global LED_BLINK_TIME
 
     if FLAG_SWITCH_ACT == 0:
-        print("mode activated \n")
+        print("mode activated")
         FLAG_SWITCH_ACT = 1
         LED_BLINK_TIME = 0.1
         GPIO.output(PIN_LIFE_LED, 1)
         time.sleep(3)
         GPIO.output(PIN_LIFE_LED, 0)
     else:
-        print("mode deactivated \n")
+        print("mode deactivated")
         FLAG_SWITCH_ACT = 0
         LED_BLINK_TIME = 1.0
         GPIO.output(PIN_LIFE_LED, 1)
         time.sleep(3)
         GPIO.output(PIN_LIFE_LED, 0)
+    
+    GPIO.add_event_detect(PIN_SWITCH_ACT_TRIG, GPIO.RISING, callback=act_switch_pushed, bouncetime=5000) # 割り込み関数
 
 def light_detected(channel):
     print("detected light")
+    GPIO.remove_event_detect(PIN_CDS)
     dt_now = datetime.datetime.now()
     print(dt_now)
 
@@ -77,7 +81,7 @@ def light_detected(channel):
 #    f = open(FILE_PATH, mode="a")
 
     if FLAG_SWITCH_ACT == 1: 
-        print("start unlock \n")
+        print("start unlock")
         GPIO.output(PIN_MOTOR_POWER, 0)  # Motor power ON
         time.sleep(1)
         motor_talk.SetPos(MOT_POS_PUSH)  # talk on
@@ -95,13 +99,14 @@ def light_detected(channel):
         print("sleep 30sec")
         time.sleep(30.0)
         print("sleep 30sec end")
+    GPIO.add_event_detect(PIN_CDS, GPIO.RISING, callback=act_switch_pushed, bouncetime=5000) # 割り込み関数
 
 """コントロール例"""
 if __name__ == '__main__':
     # Useing GPIO No.  to idetify channel
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(PIN_CDS, GPIO.IN) 
-    GPIO.add_event_detect(PIN_CDS, GPIO.RISING, callback=light_detected, bouncetime=2000) # 割り込み関数
+    GPIO.add_event_detect(PIN_CDS, GPIO.RISING, callback=light_detected, bouncetime=5000) # 割り込み関数
     GPIO.setup(PIN_MOTOR_POWER, GPIO.OUT) 
     GPIO.setup(PIN_LIFE_LED, GPIO.OUT)
     GPIO.setup(PIN_SWITCH_ACT_TRIG, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
@@ -142,4 +147,4 @@ if __name__ == '__main__':
         GPIO.output(PIN_MOTOR_POWER, 1)  # Motor power OFF
         GPIO.cleanup()
         #f.close()
-        print(" exit program")
+        print("exit program")
