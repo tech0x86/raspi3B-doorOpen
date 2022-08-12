@@ -4,6 +4,7 @@ import RPi.GPIO as GPIO
 import time
 import os
 import datetime
+
 FILE_PATH = "/home/pi3b1/Desktop/log.txt"
 
 PIN_CDS = 19
