@@ -50,6 +50,9 @@ class SG90_92R_Class:
 
 def act_switch_pushed(channel):
     print("act switch pushed \n")
+    global FLAG_SWITCH_ACT
+    global LED_BLINK_TIME
+
     if FLAG_SWITCH_ACT == 0:
         print("mode activated \n")
         FLAG_SWITCH_ACT = 1
@@ -66,7 +69,7 @@ def act_switch_pushed(channel):
         GPIO.output(PIN_LIFE_LED, 0)
 
 def light_detected(channel):
-    print("detected light \n")
+    print("detected light")
     dt_now = datetime.datetime.now()
     print(dt_now)
 
@@ -91,7 +94,8 @@ def light_detected(channel):
         GPIO.output(PIN_MOTOR_POWER, 1)  #Motor power OFF
     else:
         print("sleep 30sec")
-        time.sleep(30)
+        time.sleep(30.0)
+        print("sleep 30sec end")
 
 """コントロール例"""
 if __name__ == '__main__':
