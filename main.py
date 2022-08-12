@@ -106,7 +106,7 @@ if __name__ == '__main__':
     GPIO.setup(PIN_MOTOR_POWER, GPIO.OUT) 
     GPIO.setup(PIN_LIFE_LED, GPIO.OUT)
     GPIO.setup(PIN_SWITCH_ACT_TRIG, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-    GPIO.add_event_detect(PIN_SWITCH_ACT_TRIG, GPIO.RISING, callback=act_switch_pushed, bouncetime=2000) # 割り込み関数
+    GPIO.add_event_detect(PIN_SWITCH_ACT_TRIG, GPIO.RISING, callback=act_switch_pushed, bouncetime=5000) # 割り込み関数
 
     motor_unlock = SG90_92R_Class(Pin=PIN_MOTOR_UNLOCK, ZeroOffsetDuty=0)
     motor_talk = SG90_92R_Class(Pin=PIN_MOTOR_TALK, ZeroOffsetDuty=0)
@@ -132,7 +132,7 @@ if __name__ == '__main__':
             time.sleep(2.0-LED_BLINK_TIME)
 
     except KeyboardInterrupt:  # Ctl+Cが押されたらループを終了
-        print("\nCtl+C")
+        print("Ctl+C")
     except Exception as e:
         print(str(e))
     finally:
@@ -143,4 +143,4 @@ if __name__ == '__main__':
         GPIO.output(PIN_MOTOR_POWER, 1)  # Motor power OFF
         GPIO.cleanup()
         #f.close()
-        print("\n exit program")
+        print(" exit program")
