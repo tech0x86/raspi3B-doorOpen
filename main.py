@@ -95,11 +95,12 @@ def light_detected(channel):
         GPIO.output(PIN_MOTOR_UNLOCK, 0)
         GPIO.output(PIN_MOTOR_TALK, 0)
         GPIO.output(PIN_MOTOR_POWER, 1)  #Motor power OFF
+        print("end unlock")
     else:
         print("sleep 30sec")
         time.sleep(30.0)
         print("sleep 30sec end")
-    GPIO.add_event_detect(PIN_CDS, GPIO.RISING, callback=act_switch_pushed, bouncetime=5000) # 割り込み関数
+    GPIO.add_event_detect(PIN_CDS, GPIO.RISING, callback=light_detected, bouncetime=5000) # 割り込み関数
 
 """コントロール例"""
 if __name__ == '__main__':
