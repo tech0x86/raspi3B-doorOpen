@@ -29,9 +29,6 @@ FLAG_SWITCH_ACT = 0 # 1 :active unlocker mode
 FLAG_LIGHT = 0 # 1 :detect light
 LED_BLINK_TIME = 1.0
 
-motor_unlock = SG90_92R_Class(Pin=PIN_MOTOR_UNLOCK, ZeroOffsetDuty=0)
-motor_talk = SG90_92R_Class(Pin=PIN_MOTOR_TALK, ZeroOffsetDuty=0)
-
 # サーボSG92Rをコントロールするためのクラス
 
 class SG90_92R_Class:
@@ -141,7 +138,12 @@ def light_detected(channel):
         send_line_message("予定のないお客さんが来ました")
         time.sleep(30.0)
         print("sleep 30sec end")
+        FLAG_LIGHT = 0
     GPIO.add_event_detect(PIN_CDS, GPIO.RISING, callback=light_detected, bouncetime=5000) # 割り込み関数
+
+GPIO.setmode(GPIO.BCM)
+motor_unlock = SG90_92R_Class(Pin=PIN_MOTOR_UNLOCK, ZeroOffsetDuty=0)
+motor_talk = SG90_92R_Class(Pin=PIN_MOTOR_TALK, ZeroOffsetDuty=0)
 
 """コントロール例"""
 if __name__ == '__main__':
