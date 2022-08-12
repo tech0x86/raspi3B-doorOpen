@@ -26,7 +26,11 @@ MOT_POS_INIT = 90
 MOT_POS_PUSH = 60
 
 FLAG_SWITCH_ACT = 0 # 1 :active unlocker mode
+FLAG_LIGHT = 0 # 1 :detect light
 LED_BLINK_TIME = 1.0
+
+motor_unlock = SG90_92R_Class(Pin=PIN_MOTOR_UNLOCK, ZeroOffsetDuty=0)
+motor_talk = SG90_92R_Class(Pin=PIN_MOTOR_TALK, ZeroOffsetDuty=0)
 
 # サーボSG92Rをコントロールするためのクラス
 
@@ -90,9 +94,10 @@ def act_switch_pushed(channel):
         time.sleep(3)
         GPIO.output(PIN_LIFE_LED, 0)
     
-    GPIO.add_event_detect(PIN_SWITCH_ACT_TRIG, GPIO.RISING, callback=act_switch_pushed, bouncetime=5000) # 割り込み関数
+    GPIO.add_event_detect(PIN_SWITCH_ACT_TRIG, GPIO.RISING, callback=act_switch_pushed, bouncetime=2000) # 割り込み関数
 
 def light_detected(channel):
+    global FLAG_LIGHT
     print("detected light")
     GPIO.remove_event_detect(PIN_CDS)
     dt_now = datetime.datetime.now()
@@ -102,7 +107,8 @@ def light_detected(channel):
 #    f.close()
 #    f = open(FILE_PATH, mode="a")
 
-    if FLAG_SWITCH_ACT == 1: 
+    if FLAG_SWITCH_ACT == 1 and FLAG_LIGHT == 0: 
+        FLAG_LIGHT = 1
         print("start unlock")
         GPIO.output(PIN_MOTOR_POWER, 0)  # Motor power ON
         time.sleep(1)
@@ -120,7 +126,16 @@ def light_detected(channel):
         GPIO.output(PIN_MOTOR_TALK, 0)
         GPIO.output(PIN_MOTOR_POWER, 1)  #Motor power OFF
         print("end unlock")
+        FLAG_LIGHT = 0
+
+    elif FLAG_SWITCH_ACT == 1 and FLAG_LIGHT == 1:
+        print("sleep 10sec act1, light1")
+        time.sleep(10.0)
+    elif FLAG_SWITCH_ACT == 0 and FLAG_LIGHT == 1:
+        print("sleep 10sec act0, light1")
+        time.sleep(10.0)
     else:
+        FLAG_LIGHT = 1
         print("sleep 30sec")
         jtalk_script("予定のないお客さんが来ましたよ")
         send_line_message("予定のないお客さんが来ました")
@@ -132,15 +147,12 @@ def light_detected(channel):
 if __name__ == '__main__':
     # Useing GPIO No.  to idetify channel
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(PIN_CDS, GPIO.IN) 
-    GPIO.add_event_detect(PIN_CDS, GPIO.RISING, callback=light_detected, bouncetime=15000) # 割り込み関数
+    GPIO.setup(PIN_CDS, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+    GPIO.add_event_detect(PIN_CDS, GPIO.RISING, callback=light_detected, bouncetime=5000) # 割り込み関数
     GPIO.setup(PIN_MOTOR_POWER, GPIO.OUT) 
     GPIO.setup(PIN_LIFE_LED, GPIO.OUT)
     GPIO.setup(PIN_SWITCH_ACT_TRIG, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
     GPIO.add_event_detect(PIN_SWITCH_ACT_TRIG, GPIO.RISING, callback=act_switch_pushed, bouncetime=2000) # 割り込み関数
-
-    motor_unlock = SG90_92R_Class(Pin=PIN_MOTOR_UNLOCK, ZeroOffsetDuty=0)
-    motor_talk = SG90_92R_Class(Pin=PIN_MOTOR_TALK, ZeroOffsetDuty=0)
 
     GPIO.output(PIN_MOTOR_POWER, 0)  #Motor power ON
     GPIO.output(PIN_MOTOR_UNLOCK, 0) #Motor ON
@@ -163,7 +175,7 @@ if __name__ == '__main__':
             time.sleep(2.0-LED_BLINK_TIME)
 
     except KeyboardInterrupt:  # Ctl+Cが押されたらループを終了
-        print("Ctl+C")
+        print(" Ctl+C")
     except Exception as e:
         print(str(e))
     finally:
