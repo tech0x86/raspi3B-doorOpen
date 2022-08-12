@@ -4,9 +4,17 @@ import RPi.GPIO as GPIO
 import time
 import os
 import datetime
+import subprocess
+import requests
 
 FILE_PATH = "/home/pi3b1/Desktop/log.txt"
+PATH_JTALK = "./jtalk.sh"
 
+LINE_NOTIFY_TOKEN = os.environ.get('LINE_TOKEN')
+LINE_NOTIFY_API = 'https://notify-api.line.me/api/notify'
+
+
+# pin assigment
 PIN_CDS = 19
 PIN_MOTOR_POWER = 13  # &motorDriver (0 is On)
 PIN_LIFE_LED = 26
@@ -48,6 +56,17 @@ class SG90_92R_Class:
         time.sleep(1)
         GPIO.setup(self.mPin, GPIO.IN)
 
+# ラズパイでおしゃべりするやつ
+# 引数：話す内容
+def jtalk_script(message):
+    subprocess.run([PATH_JTALK +" "+message],shell=True)
+
+# line　に通知する
+def send_line_message(notification_message):
+    headers = {'Authorization': f'Bearer {LINE_NOTIFY_TOKEN}'}
+    data = {'message': f' {notification_message}'}
+    requests.post(LINE_NOTIFY_API, headers = headers, data = data)
+
 def act_switch_pushed(channel):
     print("act switch pushed")
     GPIO.remove_event_detect(PIN_SWITCH_ACT_TRIG)
@@ -56,6 +75,7 @@ def act_switch_pushed(channel):
 
     if FLAG_SWITCH_ACT == 0:
         print("mode activated")
+        jtalk_script("置き配受け取りモードON")
         FLAG_SWITCH_ACT = 1
         LED_BLINK_TIME = 0.1
         GPIO.output(PIN_LIFE_LED, 1)
@@ -63,6 +83,7 @@ def act_switch_pushed(channel):
         GPIO.output(PIN_LIFE_LED, 0)
     else:
         print("mode deactivated")
+        jtalk_script("通常モード")
         FLAG_SWITCH_ACT = 0
         LED_BLINK_TIME = 1.0
         GPIO.output(PIN_LIFE_LED, 1)
@@ -86,7 +107,9 @@ def light_detected(channel):
         GPIO.output(PIN_MOTOR_POWER, 0)  # Motor power ON
         time.sleep(1)
         motor_talk.SetPos(MOT_POS_PUSH)  # talk on
-        time.sleep(2)
+        jtalk_script("荷物は玄関前に置き配してください")
+        send_line_message("荷物が届きました")
+        time.sleep(4)
         motor_unlock.SetPos(MOT_POS_PUSH) # unlock bttn push
         time.sleep(1)
         motor_unlock.SetPos(MOT_POS_INIT) # unlock bttn unpush
@@ -99,6 +122,8 @@ def light_detected(channel):
         print("end unlock")
     else:
         print("sleep 30sec")
+        jtalk_script("予定のないお客さんが来ましたよ")
+        send_line_message("予定のないお客さんが来ました")
         time.sleep(30.0)
         print("sleep 30sec end")
     GPIO.add_event_detect(PIN_CDS, GPIO.RISING, callback=light_detected, bouncetime=5000) # 割り込み関数
