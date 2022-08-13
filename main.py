@@ -28,7 +28,7 @@ MOT_POS_PUSH = 60
 FLAG_SWITCH_ACT = 0 # 1 :active unlocker mode
 FLAG_LIGHT = 0 # 1 :detect light
 LED_BLINK_TIME = 1.0
-
+TIME_LIGHT_DETECT = time.time()
 # サーボSG92Rをコントロールするためのクラス
 
 class SG90_92R_Class:
@@ -66,7 +66,9 @@ def jtalk_script(message):
 def send_line_message(notification_message):
     headers = {"Authorization": f"Bearer {LINE_NOTIFY_TOKEN}"}
     data = {"message": f" {notification_message}"}
-    requests.post(LINE_NOTIFY_API, headers = headers, data = data)
+    r = requests.post(LINE_NOTIFY_API, headers = headers, data = data)
+    print(r)
+    time.sleep(1)
 
 def act_switch_pushed(channel):
     print("act switch pushed")
@@ -76,7 +78,7 @@ def act_switch_pushed(channel):
 
     if FLAG_SWITCH_ACT == 0:
         print("mode activated")
-        jtalk_script("置き配受け取りモードオン")
+        jtalk_script("置き配受け取りモードをオンにしました")
         FLAG_SWITCH_ACT = 1
         LED_BLINK_TIME = 0.1
         GPIO.output(PIN_LIFE_LED, 1)
@@ -95,14 +97,16 @@ def act_switch_pushed(channel):
 
 def light_detected(channel):
     global FLAG_LIGHT
+    global TIME_LIGHT_DETECT
+
+    diff_t = time.time() - TIME_LIGHT_DETECT
+    if diff_t < 40:
+        return
+
     print("detected light")
     GPIO.remove_event_detect(PIN_CDS)
     dt_now = datetime.datetime.now()
     print(dt_now)
-
-#    f.write(str(dt_now) + '\n')
-#    f.close()
-#    f = open(FILE_PATH, mode="a")
 
     if FLAG_SWITCH_ACT == 1 and FLAG_LIGHT == 0: 
         FLAG_LIGHT = 1
@@ -139,6 +143,8 @@ def light_detected(channel):
         time.sleep(30.0)
         print("sleep 30sec end")
         FLAG_LIGHT = 0
+
+    TIME_LIGHT_DETECT = time.time()
     GPIO.add_event_detect(PIN_CDS, GPIO.RISING, callback=light_detected, bouncetime=5000) # 割り込み関数
 
 GPIO.setmode(GPIO.BCM)
@@ -163,12 +169,8 @@ if __name__ == '__main__':
     motor_talk.SetPos(MOT_POS_INIT)  #set init pos
     time.sleep(1)
     GPIO.output(PIN_MOTOR_POWER, 1)  # Motor power OFF
-    
-#    try:
-#        f = open(FILE_PATH, mode="a")
-#    except Exception as e:
-#        print(str(e))
-#        f.close()
+    jtalk_script("システム起動しました")
+    send_line_message("システム起動")
     try:
         while True:
             GPIO.output(PIN_LIFE_LED, 1)
@@ -187,5 +189,4 @@ if __name__ == '__main__':
         time.sleep(1)
         GPIO.output(PIN_MOTOR_POWER, 1)  # Motor power OFF
         GPIO.cleanup()
-        #f.close()
         print("exit program")
