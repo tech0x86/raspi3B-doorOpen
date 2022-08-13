@@ -28,7 +28,7 @@ MOT_POS_PUSH = 60
 FLAG_SWITCH_ACT = 0 # 1 :active unlocker mode
 FLAG_LIGHT = 0 # 1 :detect light
 LED_BLINK_TIME = 1.0
-TIME_LIGHT_DETECT = time.time()
+
 # サーボSG92Rをコントロールするためのクラス
 
 class SG90_92R_Class:
@@ -66,9 +66,7 @@ def jtalk_script(message):
 def send_line_message(notification_message):
     headers = {"Authorization": f"Bearer {LINE_NOTIFY_TOKEN}"}
     data = {"message": f" {notification_message}"}
-    r = requests.post(LINE_NOTIFY_API, headers = headers, data = data)
-    print(r)
-    time.sleep(1)
+    requests.post(LINE_NOTIFY_API, headers = headers, data = data)
 
 def act_switch_pushed(channel):
     print("act switch pushed")
@@ -78,7 +76,7 @@ def act_switch_pushed(channel):
 
     if FLAG_SWITCH_ACT == 0:
         print("mode activated")
-        jtalk_script("置き配受け取りモードをオンにしました")
+        jtalk_script("置き配受け取りモードオン")
         FLAG_SWITCH_ACT = 1
         LED_BLINK_TIME = 0.1
         GPIO.output(PIN_LIFE_LED, 1)
@@ -92,40 +90,32 @@ def act_switch_pushed(channel):
         GPIO.output(PIN_LIFE_LED, 1)
         time.sleep(3)
         GPIO.output(PIN_LIFE_LED, 0)
-    
     GPIO.add_event_detect(PIN_SWITCH_ACT_TRIG, GPIO.RISING, callback=act_switch_pushed, bouncetime=2000) # 割り込み関数
 
 def light_detected(channel):
     global FLAG_LIGHT
-    global TIME_LIGHT_DETECT
-
-    diff_t = time.time() - TIME_LIGHT_DETECT
-    if diff_t < 40:
-        return
-
     print("detected light")
     GPIO.remove_event_detect(PIN_CDS)
     dt_now = datetime.datetime.now()
-    print(dt_now)
-
+    print(
     if FLAG_SWITCH_ACT == 1 and FLAG_LIGHT == 0: 
         FLAG_LIGHT = 1
         print("start unlock")
         GPIO.output(PIN_MOTOR_POWER, 0)  # Motor power ON
         time.sleep(1)
-        motor_talk.SetPos(MOT_POS_PUSH - 8)  # talk on
-        time.sleep(1)
-        motor_talk.SetPos(MOT_POS_INIT) # talk off
+        motor_talk.SetPos(MOT_POS_PUSH)  # talk on
         jtalk_script("荷物は、玄関前に、置き配してください")
+        send_line_message("荷物が届きました")
         time.sleep(4)
-        motor_unlock.SetPos(MOT_POS_PUSH + 5) # unlock bttn push
+        motor_unlock.SetPos(MOT_POS_PUSH) # unlock bttn push
         time.sleep(1)
         motor_unlock.SetPos(MOT_POS_INIT) # unlock bttn unpush
+        time.sleep(1)
+        motor_talk.SetPos(MOT_POS_INIT) # talk off
         time.sleep(1)
         GPIO.output(PIN_MOTOR_UNLOCK, 0)
         GPIO.output(PIN_MOTOR_TALK, 0)
         GPIO.output(PIN_MOTOR_POWER, 1)  #Motor power OFF
-        send_line_message("荷物が届きました")
         print("end unlock")
         FLAG_LIGHT = 0
 
@@ -137,14 +127,12 @@ def light_detected(channel):
         time.sleep(10.0)
     else:
         FLAG_LIGHT = 1
-        print("sleep 20sec")
+        print("sleep 30sec")
         jtalk_script("予定のないお客さんが来ましたよ")
-        time.sleep(20.0)
         send_line_message("予定のないお客さんが来ました")
-        print("sleep 20sec end")
+        time.sleep(30.0)
+        print("sleep 30sec end")
         FLAG_LIGHT = 0
-
-    TIME_LIGHT_DETECT = time.time()
     GPIO.add_event_detect(PIN_CDS, GPIO.RISING, callback=light_detected, bouncetime=5000) # 割り込み関数
 
 GPIO.setmode(GPIO.BCM)
@@ -169,8 +157,12 @@ if __name__ == '__main__':
     motor_talk.SetPos(MOT_POS_INIT)  #set init pos
     time.sleep(1)
     GPIO.output(PIN_MOTOR_POWER, 1)  # Motor power OFF
-    jtalk_script("システム起動しました")
-    send_line_message("システム起動")
+    
+#    try:
+#        f = open(FILE_PATH, mode="a")
+#    except Exception as e:
+#        print(str(e))
+#        f.close()
     try:
         while True:
             GPIO.output(PIN_LIFE_LED, 1)
@@ -189,4 +181,5 @@ if __name__ == '__main__':
         time.sleep(1)
         GPIO.output(PIN_MOTOR_POWER, 1)  # Motor power OFF
         GPIO.cleanup()
+        #f.close()
         print("exit program")
