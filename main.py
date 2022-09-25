@@ -100,9 +100,11 @@ def light_detected(channel):
     global TIME_LIGHT_DETECT
 
     diff_t = time.time() - TIME_LIGHT_DETECT
-    if diff_t < 40:
+    if diff_t < 20:
         return
-
+    time.sleep(1)
+    if GPIO.input(channel) == 0:
+        return
     print("detected light")
     GPIO.remove_event_detect(PIN_CDS)
     dt_now = datetime.datetime.now()
@@ -112,13 +114,12 @@ def light_detected(channel):
         FLAG_LIGHT = 1
         print("start unlock")
         GPIO.output(PIN_MOTOR_POWER, 0)  # Motor power ON
-        time.sleep(1)
         motor_talk.SetPos(MOT_POS_PUSH - 8)  # talk on
         time.sleep(1)
         motor_talk.SetPos(MOT_POS_INIT) # talk off
         jtalk_script("荷物は、玄関前に、置き配してください")
-        time.sleep(4)
-        motor_unlock.SetPos(MOT_POS_PUSH + 5) # unlock bttn push
+        time.sleep(1)
+        motor_unlock.SetPos(MOT_POS_PUSH + 2) # unlock bttn push
         time.sleep(1)
         motor_unlock.SetPos(MOT_POS_INIT) # unlock bttn unpush
         time.sleep(1)
