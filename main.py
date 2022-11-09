@@ -117,8 +117,7 @@ def light_detected(channel):
         motor_talk.SetPos(MOT_POS_PUSH - 8)  # talk on
         time.sleep(1)
         motor_talk.SetPos(MOT_POS_INIT) # talk off
-        jtalk_script("荷物は、玄関前に、置き配してください")
-        time.sleep(1)
+        jtalk_script("荷物は玄関前に置き配してください")
         motor_unlock.SetPos(MOT_POS_PUSH + 2) # unlock bttn push
         time.sleep(1)
         motor_unlock.SetPos(MOT_POS_INIT) # unlock bttn unpush
